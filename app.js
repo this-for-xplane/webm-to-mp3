@@ -1,7 +1,3 @@
-import { createFFmpeg, fetchFile } from 'https://esm.sh/@ffmpeg/ffmpeg@0.11.6';
-
-const ffmpeg = createFFmpeg({ log: true });
-
 const uploader = document.getElementById('uploader');
 const convertBtn = document.getElementById('convertBtn');
 const statusText = document.getElementById('statusText');
@@ -14,42 +10,38 @@ convertBtn.addEventListener('click', async () => {
     return;
   }
 
+  const file = uploader.files[0];
   convertBtn.disabled = true;
   statusContainer.classList.remove('hidden');
-  statusText.textContent = 'Loading FFmpeg...';
-  progressBar.value = 0;
+  statusText.textContent = 'Uploading file...';
+  progressBar.value = 10;
 
-  if (!ffmpeg.isLoaded()) {
-    await ffmpeg.load();
+  try {
+    const response = await fetch('/api/convert', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      },
+      body: file
+    });
+
+    if (!response.ok) {
+      throw new Error('Conversion failed');
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name.replace(/\.webm$/i, '.mp3');
+    a.click();
+
+    statusText.textContent = 'Conversion complete!';
+    progressBar.value = 100;
+  } catch (err) {
+    statusText.textContent = 'Error: ' + err.message;
+    progressBar.value = 0;
   }
 
-  const file = uploader.files[0];
-  const inputName = 'input.webm';
-  const outputName = 'output.mp3';
-
-  ffmpeg.FS('writeFile', inputName, await fetchFile(file));
-
-  statusText.textContent = 'Converting...';
-  progressBar.value = 0;
-
-  ffmpeg.setProgress(({ ratio }) => {
-    const percent = Math.min(100, Math.round(ratio * 100));
-    progressBar.value = percent;
-    statusText.textContent = `Converting... ${percent}%`;
-  });
-
-  await ffmpeg.run('-i', inputName, '-vn', outputName);
-
-  const data = ffmpeg.FS('readFile', outputName);
-  const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = file.name.replace(/\.webm$/i, '.mp3');
-  a.click();
-
-  statusText.textContent = 'Conversion complete!';
-  progressBar.value = 100;
   convertBtn.disabled = false;
 });
