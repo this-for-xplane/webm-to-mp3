@@ -1,0 +1,7 @@
+{
+  "name": "webm-to-mp3-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.11.6"
+  }
+}
