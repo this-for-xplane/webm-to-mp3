@@ -1,6 +1,8 @@
 {
-  "name": "webm-to-mp3-api",
+  "name": "webm-to-mp3-converter",
   "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.11.6"
   }
