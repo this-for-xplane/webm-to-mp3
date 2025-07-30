@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WebM to MP3</title>
+</head>
+<body>
+  <h1>WebM to MP3 Converter</h1>
+  <input type="file" id="uploader" accept=".webm"><br><br>
+  <button id="convertBtn">Convert to MP3</button>
+  <p id="status"></p>
+  <script type="module">
+    import { createFFmpeg, fetchFile } from 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.5/dist/ffmpeg.min.js';
+
+    const ffmpeg = createFFmpeg({ log: true });
+    const uploader = document.getElementById('uploader');
+    const status = document.getElementById('status');
+
+    document.getElementById('convertBtn').onclick = async () => {
+      if (!uploader.files.length) return alert('Select a file first!');
+      status.textContent = 'Loading FFmpeg...';
+      await ffmpeg.load();
+
+      const file = uploader.files[0];
+      ffmpeg.FS('writeFile', 'input.webm', await fetchFile(file));
+      status.textContent = 'Converting...';
+      await ffmpeg.run('-i', 'input.webm', '-vn', 'output.mp3');
+
+      const data = ffmpeg.FS('readFile', 'output.mp3');
+      const url = URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mpeg' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'converted.mp3';
+      a.click();
+
+      status.textContent = 'Done!';
+    };
+  </script>
+</body>
+</html>
